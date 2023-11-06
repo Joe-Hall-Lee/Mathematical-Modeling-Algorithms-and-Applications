@@ -1,0 +1,23 @@
+clc, clear
+a = readmatrix('data10_5.txt');
+[m, n] = size(a);
+x0 = a(:, [1:n - 1]);
+y0 = a(:, n);
+md1 = fitlm(x0, y0) % 普通最小二乘法拟合模型
+c1 = md1.Coefficients.Estimate % 提出模型的系数
+rmse1 = md1.RMSE % 提出模型的剩余标准差
+mu = mean(x0);
+s = std(x0); % 求自变量观测值的均值和标准差
+xd = zscore(x0); % 对设计矩阵进行标准化处理
+[vec, score, lambda] = pca(xd) % score 为主成分的得分，lambda 为特征值
+rate = lambda / sum(lambda) % 计算各个主成分的贡献率
+contr = cumsum(rate) % 计算累积贡献率
+num = 3 % num 为选取的主成分的个数
+px = score(:, 1:num); % 提出各个主成分的得分
+md2 = fitlm(px, y0) % 建立主成分回归方程
+rmse2 = md2.RMSE % 提出模型的剩余标准差
+c2 = md2.Coefficients.Estimate % 提出主成分回归方程的系数
+c3 = [c2(1); vec(:, 1:num) * c2(2:end)] % 标准化变量的回归系数
+c40 = [c3(1) - sum(c3(2:end)'.*mu./s)] % 求原始变量的回归常数项
+c41 = c3(2:end)' ./ s % 求原始变量的一次项系数
+c4 = [c40, c41] % 显示原始变量的所有回归系数

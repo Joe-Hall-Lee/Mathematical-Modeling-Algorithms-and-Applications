@@ -1,0 +1,29 @@
+clc, clear
+a = imread('tu11_1.bmp');
+ws1 = size(a); % 读入保密图像，并计算维数
+b = imread('tu11_2.bmp');
+ws2 = size(b); % 读入载体图像，并计算维数
+nb = imresize(b, ws1(1:2)); % 把载体图像变换成与保密图像同样大小
+key = -0.400001; % 给出密钥，即混沌序列的初始值
+L = max(ws1);
+x(1) = key;
+y(1) = key;
+alpha = 1.4;
+beta = 0.3;
+for i = 1:L - 1 % 生成两个混沌序列
+    x(i+1) = 1 - alpha * x(i)^2 + y(i);
+    y(i+1) = beta * x(i);
+end
+x(ws1(1)+1:end) = []; % 删除 x 后面一部分元素
+[sx, ind1] = sort(x);
+[sy, ind2] = sort(y); % 对混沌序列按照从小到大排序
+ea(ind1, ind2, :) = a; % 打乱保密图像的行序和列序，生成加密图像矩阵 ea
+imshow(ea) % 显示保密图像加密后得到的图像
+nb2 = bitand(nb, 240); % 载体图像与 11110000（（二进制）= 240（十进制））逐位与运算
+ea2 = bitand(ea, 240); % 加密图像与 11110000 逐位与运算
+ea2 = ea2 / 16; % 加密图像高 4 位移到低 4 位
+da = bitor(nb2, ea2); % 把加密图像嵌入载体图像的低 4 位，构造合成图像
+da2 = bitand(da, 15) * 16; % 这里 15（十进制）= 00001111，提取加密图像的高 4 位
+da3 = da2(ind1, ind2, :); % 对加密图像进行解密
+figure, subplot(1, 2, 1), imshow(da3) % 显示提取的保密图像
+subplot(1, 2, 2), imshow(da) % 显示嵌入加密图像的合成图像
